@@ -1,31 +1,45 @@
-// This example sketch connects to shiftr.io
-// and sends a message on every keystroke.
-//
-// After starting the sketch you can find the
-// client here: https://shiftr.io/try.
-//
-// Note: If you're running the sketch via the
-// Android Mode you need to set the INTERNET
-// permission in Android > Sketch Permissions.
-//
-// by Joël Gähwiler
-// https://github.com/256dpi/processing-mqtt
+/*
+   Making Entangled Things
+   -
+   David Chatting - david@davidchatting.com
+   8th July 2019
+   -
+   Processing example
+*/
 
-import mqtt.*;
+import mqtt.*;  //https://github.com/256dpi/processing-mqtt
+import processing.video.*;
 
-MQTTClient client;
+MQTTClient mqtt;
+
+Capture camera;
+
+color currentColor = 0;
 
 void setup() {
-  client = new MQTTClient(this);
-  client.connect("mqtt://try:try@broker.shiftr.io", "processing");
-  client.subscribe("/example");
-  // client.unsubscribe("/example");
+  size(320, 240);
+  frameRate(100);
+  
+  mqtt = new MQTTClient(this);
+  
+  mqtt.connect("mqtt://192.168.8.221");
+  mqtt.subscribe("#");  //get everything
+
+  camera = new Capture(this, 320, 240);
+  camera.start();
 }
 
-void draw() {}
+void captureEvent(Capture e) {
+  e.read();
+  currentColor = e.get(320/2, 240/2);  //get the colour of the central pixel
+}
+
+void draw() {
+  background(currentColor);
+}
 
 void keyPressed() {
-  client.publish("/hello", "world");
+  mqtt.publish("/led/rgb", hex(currentColor, 6));
 }
 
 void messageReceived(String topic, byte[] payload) {
